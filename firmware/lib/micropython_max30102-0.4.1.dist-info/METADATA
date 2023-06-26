@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: micropython-max30102
+Version: 0.4.1
+Summary: MAX30102 driver for micropython.
+Home-page: https://github.com/n-elia/MAX30102-MicroPython-driver
+Author: Nicola Elia
+License: MIT
+
