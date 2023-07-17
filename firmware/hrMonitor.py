@@ -3,6 +3,20 @@ import constants
 import leds
 from max30102 import MAX30102
 
+def datacollection(irDataDict, irValue, timeDataDict, now, data_counter, data_size):
+    if (data_counter < data_size):
+        irDataDict[data_counter] = irValue
+        timeDataDict[data_counter] = now
+    elif (data_counter == data_size):
+        with open('data.json', 'w') as f:
+            json.dump(irDataDict, f)
+        with open('data2.json', 'w') as f:
+            json.dump(timeDataDict, f)
+            print("data collected")
+    else:
+        pass
+        #print("data collection done")
+
 class HRMonitor:
   sensor = None
 
@@ -29,6 +43,9 @@ class HRMonitor:
     HRMonitor.sensor.set_pulse_amplitude_red(pulseAmp)
     HRMonitor.sensor.set_pulse_amplitude_it(pulseAmp)
     HRMonitor.sensor.set_active_leds_amplitude(ledAmp)
+    # default rate has been 400 lets try increasing that
+    #800 seems best from testing
+    HRMonitor.sensor.set_sample_rate(800)
 
     if( constants.HR_TESTING ):
         lastBeatTime = 0
@@ -43,6 +60,12 @@ class HRMonitor:
         count = timeoutCount
         waitForBeat = True
         sensorActive = False
+
+        #data collection variables
+        data_size = 500
+        data_counter = 0
+        irDataDict = {}
+        timeDataDict = {}
         
         #time.sleep(5)
         print( "Runloop" )
@@ -55,6 +78,11 @@ class HRMonitor:
                 red_sample = HRMonitor.sensor.pop_red_from_storage()
                 
                 if( irValue > 2000 or sensorActive ):
+                    
+                    # use code below to plot / visualize data coming in
+                    # datacollection(irDataDict, irValue, timeDataDict, now, data_counter, data_size)
+                    # data_counter = data_counter + 1
+
                     sensorActive = True
                     avgValue = 0.0
                     rollingAverageArray[arrIndex] = irValue
