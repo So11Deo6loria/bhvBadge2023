@@ -1,12 +1,64 @@
 import time
 import constants
 from neopixel import NeoPixel
+import machine
+from machine import UART
 
+def uartVersion(uart):
+  uart.write(" Software version ####")
+  
+def uartWhoami(uart):
+    #just a joke
+    uart.write("heart")
+
+
+def uartHelp(uart):
+  uart.write("help: displays this help window")
+  uart.write(" version: displays software version number")
+  uart.write(" clear: print a bunch of spaces")
+  uart.write(" whoami: your name")
+  uart.write(" TODO: add more functions")
+      
 class CerealInterface:
   def __init__(self, pin1, pin2):
     print("Cereal Init")
     self.pin1 = NeoPixel( pin1, 8 )
     self.pin2 = NeoPixel( pin2, 8 )
+    
+
+  #Run your serial connection with local echo
+  def uartShell(self):
+    uart = UART(0, baudrate=constants.BAUD_RATE, tx=machine.Pin(constants.CEREAL_TX_PIN), rx=machine.Pin(constants.CEREAL_RX_PIN))
+    print(uart) #for debugging/uart info
+    
+    prompt="Enter your command: "
+    uart.write(prompt)
+    command = [] # start with blank string
+    #Run Shell
+    while True:
+        if uart.any():
+            data = uart.read() #read data from uart
+            if data == b'\r': #enter recieved 
+                commandString = ''.join(command)
+                command = []
+                print("cmd recieved: "+commandString)
+                if commandString == "help":
+                    uartHelp(uart)
+                elif commandString == "version":
+                    uartVersion(uart)
+                elif commandString == "whoami":
+                    uartWhoami(uart)
+                elif commandString == "":
+                   uart.write(prompt)
+                else:
+                    uart.write("cmd not recognized try again ")
+                    uart.write(prompt)
+            elif (data == b'\x7f'): # backspace
+                if len(command) > 0:
+                  command.pop()
+            else:
+                data = data.decode('utf-8') #convert data to string
+                command.append(data)# add value
 
   def hexListToRGBTupleList( self, cerealArray ):
     colorArray = []
