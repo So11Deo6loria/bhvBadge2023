@@ -4,20 +4,49 @@ from neopixel import NeoPixel
 import machine
 from machine import UART
 
+
+logo = """
+                 ,*******,                             .*****,                  
+                     ,*******                       *******                     
+             .     *****  *****                    ******                       
+            **  ,****     ,*****                  ********       .**,           
+            *******     ****.***                  **********, .*****            
+             ****    ,****   ****                *******************            
+              ,********      ****              *******************              
+                 .********   ***,  ******** *************,...                   
+                             ***       ,*************                           
+                             ***       ,*** *******                             
+                             ****    ***.    *****                              
+                             ,***,.***    ,*** ,***                             
+                              ,*****    ***     ****                            
+                              ***********       ,***                            
+                           ,*************,      ****                            
+                   ....,************  ********  ****  *********.                
+               *******************              ****    .*********.             
+             ******************,                ****  /***.    .****            
+            ******  **********.                 ,*******     ****.***           
+            ***        *******                   ****.    .***     **           
+                       *******                    ****, ****       ,            
+                     ,******                        ******                      
+                   ******                              *******                  
+
+"""
+
 def uartVersion(uart):
-  uart.write(" Software version ####")
-  
+  uart.write("Software version ####\r\n")
+
+def uartSecret(uart):
+  uart.write("secret: urbreakingmyheart\r\n")
 def uartWhoami(uart):
     #just a joke
-    uart.write("heart")
+    uart.write("heart\r\n")
 
 
 def uartHelp(uart):
-  uart.write("help: displays this help window")
-  uart.write(" version: displays software version number")
-  uart.write(" clear: print a bunch of spaces")
-  uart.write(" whoami: your name")
-  uart.write(" TODO: add more functions")
+  uart.write("help: displays this help window\r\n")
+  uart.write("version: displays software version number\r\n")
+  uart.write("whoami: your name\r\n")
+  uart.write("secret: ...\r\n")
       
 class CerealInterface:
   def __init__(self, pin1, pin2):
@@ -32,6 +61,7 @@ class CerealInterface:
     print(uart) #for debugging/uart info
     
     prompt="Enter your command: "
+    uart.write(logo)
     uart.write(prompt)
     command = [] # start with blank string
     #Run Shell
@@ -48,6 +78,8 @@ class CerealInterface:
                     uartVersion(uart)
                 elif commandString == "whoami":
                     uartWhoami(uart)
+                elif commandString == "secret":
+                    uartSecret(uart)                    
                 elif commandString == "":
                    uart.write(prompt)
                 else:
