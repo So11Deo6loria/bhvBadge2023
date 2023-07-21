@@ -2,13 +2,13 @@ import lowpower
 import time
 
 
-time.sleep(1)
+""" time.sleep(1)
 DORMANT_PIN = 5
 print("Pre-Trigger Start")
 lowpower.dormant_with_modes({
         DORMANT_PIN: (lowpower.EDGE_LOW)
 })
-print("Triggered")
+print("Triggered") """
 
 import _thread
 import constants
@@ -62,7 +62,7 @@ class Main:
         # oxPin = Pin(constants.OX_LED_PIN, Pin.OUT)
         # deoxPin = Pin(constants.DEOX_LED_PIN, Pin.OUT)
         
-        schemes = ["rainbow", "nathan", "heart"]
+        schemes = ["rainbow", "nathan", "heart", 'creepercrunch']
         index = 0
         leds = prettyLights.LEDS()
         leds.updateColorScheme("heart")
@@ -78,7 +78,7 @@ class Main:
             if pin.value() == 0:
                 print("changing sheme")
             # if(interrupt_flag!=0):
-                leds.updateColorScheme(schemes[index%3])
+                leds.updateColorScheme(schemes[index%(len(schemes)-1)]) # cycle through color schemes
                 index+=1
                 interrupt_flag=0
 
