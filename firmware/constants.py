@@ -4,8 +4,8 @@ LED_TESTING = True
 HR_TESTING = True
 
 # Board Configuration
-SDA_PIN = 16
-SCL_PIN = 17
+SDA_PIN = 6
+SCL_PIN = 7
 OX_LED_PIN = 19
 DEOX_LED_PIN = 18
 PICO_LED_PIN = 25
