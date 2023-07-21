@@ -30,15 +30,34 @@ class LEDS:
   'fruitloops':
   ['ff0000', 'ffe700', '7cff00', 'c900ff', '00dfff'],
   
-  'applejacks':
-  ['ffc360', 'fff4a3', 'e4a95d', '5caf4c', 'ff6254'],
-  
   'trix':
   ['58e3ff', '87a2ff', 'af7ffc', 'da4e7d', 'f14848'], 
   
   'rainbow':
   ['ff008f', 'ff00ff', '0010ff', '00cfff', '00ff00', 'ff5500', 'ff1500',
-   'ff00ff', '0020ff', '00cfff', '00ff00', 'ffaf00', 'ff1500','ff0000',]
+   'ff00ff', '0020ff', '00cfff', '00ff00', 'ffaf00', 'ff1500','ff0000',],
+
+  'applejacks':
+  ['3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 
+   'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23'],
+
+   'oreo':
+   ['f2f0ed','171716'],
+
+   'booberry':
+   ['8362a6','68bce3','4a7e96','fc0505'],
+
+    'creepercrunch':
+   ['8fe38f','0f800f','0db50d','609e60','004500'],
+
+   'reesespuffs':
+   ['fe5200','551e0a','fdef14'],
+
+   'carmellacreeper':
+   ['22b32c','a2b322','e56fed','ed6fb7'],
+
+   'frankenberry':
+   ['ed6fb7','6fc1ed','cf84f0','e5dfe8']
 }
 
   # ledConfig = [ \
