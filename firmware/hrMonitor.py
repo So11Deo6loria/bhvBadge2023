@@ -3,20 +3,6 @@ import constants
 import leds
 from max30102 import MAX30102
 
-def datacollection(irDataDict, irValue, timeDataDict, now, data_counter, data_size):
-    if (data_counter < data_size):
-        irDataDict[data_counter] = irValue
-        timeDataDict[data_counter] = now
-    elif (data_counter == data_size):
-        with open('data.json', 'w') as f:
-            json.dump(irDataDict, f)
-        with open('data2.json', 'w') as f:
-            json.dump(timeDataDict, f)
-            print("data collected")
-    else:
-        pass
-        #print("data collection done")
-
 class HRMonitor:
   sensor = None
 
@@ -34,96 +20,99 @@ class HRMonitor:
     print( "It's alive!" )
     self.hrRunLoop()
 
-  def hrRunLoop(self):
-    print("runloop")
+  def configure_max30102(self, i2c):
+    # My Code
     pulseAmp = 0x1F
     ledAmp = 0x1F
+    self.sensor.set_pulse_amplitude_red(pulseAmp)
+    self.sensor.set_pulse_amplitude_it(pulseAmp)
+    self.sensor.set_active_leds_amplitude(ledAmp)
 
-    # HR Tuning
-    HRMonitor.sensor.set_pulse_amplitude_red(pulseAmp)
-    HRMonitor.sensor.set_pulse_amplitude_it(pulseAmp)
-    HRMonitor.sensor.set_active_leds_amplitude(ledAmp)
-    # default rate has been 400 lets try increasing that
-    #800 seems best from testing
-    HRMonitor.sensor.set_sample_rate(800)
+  def calculate_heart_rate(self, ir_data_array, sample_rate=100, ema_alpha=0.2, moving_average_length=5):
+    # Check if the input data is sufficient for moving average filtering
+    if len(ir_data_array) < moving_average_length:
+        return None
 
-    if( constants.HR_TESTING ):
-        lastBeatTime = 0
-        arrSize = 5
-        timeoutCount = 50
-        bpmAvgSize = 10
-        arrIndex = 0
-        rollingAverageArray = [0] * arrSize
-        bpmAvgArray = [0] * bpmAvgSize
-        bpmIndex = 0
-        bpmAvg = 0.0
-        count = timeoutCount
-        waitForBeat = True
-        sensorActive = False
+    # Apply a simple moving average filter to the raw IR data
+    ir_smoothed = []
+    for i in range(len(ir_data_array) - moving_average_length + 1):
+        ir_average = sum(ir_data_array[i:i + moving_average_length]) / moving_average_length
+        ir_smoothed.append(ir_average)
 
-        #data collection variables
-        data_size = 500
-        data_counter = 0
-        irDataDict = {}
-        timeDataDict = {}
-        
-        #time.sleep(5)
-        print( "Runloop" )
-        while True:        
-            HRMonitor.sensor.check()
-            
-            if( HRMonitor.sensor.available() ):
-                now = time.ticks_ms()
-                irValue = HRMonitor.sensor.pop_ir_from_storage()
-                red_sample = HRMonitor.sensor.pop_red_from_storage()
-                
-                if( irValue > 2000 or sensorActive ):
-                    
-                    # use code below to plot / visualize data coming in
-                    # datacollection(irDataDict, irValue, timeDataDict, now, data_counter, data_size)
-                    # data_counter = data_counter + 1
+    # Apply an exponential moving average (EMA) filter to the smoothed IR data
+    ema = ir_smoothed[0]
+    filtered_ir_data = [ema]
+    for ir_data in ir_smoothed[1:]:
+        ema = ema_alpha * ir_data + (1 - ema_alpha) * ema
+        filtered_ir_data.append(ema)
 
-                    sensorActive = True
-                    avgValue = 0.0
-                    rollingAverageArray[arrIndex] = irValue
-                    arrIndex = ( arrIndex + 1 ) % arrSize
-                    
-                    for i in range(5):
-                        avgValue = rollingAverageArray[i] + avgValue
-                    avgValue = avgValue / 5.0
-                    
-                    if( ( irValue - avgValue ) < -4 ):
-                        count = timeoutCount
-                        
-                        if( waitForBeat ):
-                            print( "beat" )
-                            waitForBeat = False                
-                            delta = ( now - lastBeatTime ) / 1000.0
-                            lastBeatTime = now
-                            bpmAvgArray[bpmIndex] = (60.0 / delta)
-                            bpmIndex = ( bpmIndex + 1 ) % bpmAvgSize
-                            
-                            for i in range(bpmAvgSize):
-                                bpmAvg = bpmAvgArray[i] + bpmAvg
-                            bpmAvg = bpmAvg / float(bpmAvgSize)
-                            bpm = int(bpmAvg)
-                            print("BPM Value" + str(bpm))
-                            if( bpm > 50 and bpm < 200 ):
-                              self.ledHandle.updateBPM(bpm)
-                    elif( ( irValue - avgValue ) > 1  ):
-                        waitForBeat = True
-                    else:
-                        if( count > 0 ):
-                            count = count - 1
-                            if( count == 0 ):
-                                sensorActive = False
-                                lastBeatTime = now
-                                bpmAvgArray = [0] * bpmAvgSize
-                                bpmIndex = 0
-                                bpmAvg = 0.0
-                                bpm = 0
+    # Find peaks (local maxima) in the filtered IR signal
+    peaks = []
+    for i in range(1, len(filtered_ir_data) - 1):
+        if filtered_ir_data[i] > filtered_ir_data[i - 1] and filtered_ir_data[i] > filtered_ir_data[i + 1]:
+            peaks.append(i)
+
+    # Calculate time between consecutive peaks and estimate heart rate in BPM
+    if len(peaks) >= 2:
+        time_between_peaks = (peaks[-1] - peaks[0]) / sample_rate  # Time in seconds between first and last peak
+        heart_rate_bpm = 60 / time_between_peaks
+
+        # Range check for BPM values
+        min_bpm = 40
+        max_bpm = 200
+        if min_bpm <= heart_rate_bpm <= max_bpm:
+            return heart_rate_bpm
+        else:
+            return None
+    else:
+        return None
+
+  def hrRunLoop(self):        
+    # Check if the Max30102 is present
+    self.sensor.check()
+
+    time.sleep(2)
+
+    print("Checking Sensor")
+    self.sensor.check()
+    if( not self.sensor.available() ):
+        print("Max30102 not found. Check wiring.")
+        return 
+    
+    # Configure the Max30102
+    self.configure_max30102(self.i2cHandle)
+
+    ir_data_array = []
+    # Variables for BPM filtering
+    bpm_ema_alpha = 0.1
+    bpm_ema = None
+    
+    while True:
+        # Read data from the Max30102
+        #red_data, ir_data = read_max30102_data(i2c)
+        self.sensor.check()
+        if( self.sensor.available() ):            
+            red_data = self.sensor.pop_red_from_storage()
+            ir_data = self.sensor.pop_ir_from_storage()
+            ir_data_array.append(ir_data)
+
+            # Limit the size of the array to prevent excessive memory usage
+            max_array_size = 100
+            if len(ir_data_array) > max_array_size:
+                ir_data_array = ir_data_array[-max_array_size:]
+
+            # Calculate heart rate and print it to the console
+            heart_rate = self.calculate_heart_rate(ir_data_array)
+            if heart_rate is not None:
+                if bpm_ema is None:
+                    bpm_ema = heart_rate
                 else:
-                    # Delay HR measurement to save power when sensor is inactive
-                    print( "hr read delay" )
-                    time.sleep(3)
-                #print(",".join(map(str,[now,irValue,avgValue,irValue-avgValue,bpmAvg])))
+                    bpm_ema = bpm_ema_alpha * heart_rate + (1 - bpm_ema_alpha) * bpm_ema
+                print("Filtered Heart Rate:", bpm_ema, "BPM")
+            else:
+                print("Heart Rate calculation failed. Not enough peaks detected.")
+
+            # Wait a moment before taking the next reading
+            time.sleep(0.1)
+        else:
+            time.sleep(0.05)

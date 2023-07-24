@@ -27,6 +27,7 @@ def callback(self):
     global interrupt_flag
     print("Interrupt Detected")
     interrupt_flag=1
+    
 class Main:
     def __init__(self): 
         print("Start Up") # only print after receiving signal on Pin number DORMANT_PIN
@@ -72,15 +73,15 @@ class Main:
 
         # pin.irq(trigger=Pin.IRQ_RISING, handler=callback)
 
-        while True:
-            time.sleep(.5)
-            print("checking")
-            if pin.value() == 0:
-                print("changing sheme")
+        #while True:
+        #    time.sleep(.5)
+        #    print("checking")
+        #    if pin.value() == 0:
+        #        print("changing sheme")
             # if(interrupt_flag!=0):
-                leds.updateColorScheme(schemes[index%(len(schemes)-1)]) # cycle through color schemes
-                index+=1
-                interrupt_flag=0
+        #        leds.updateColorScheme(schemes[index%(len(schemes)-1)]) # cycle through color schemes
+        #        index+=1
+        #        interrupt_flag=0
 
         # print("Setting Up Interrupt")
 
@@ -114,6 +115,7 @@ class Main:
             #         time.sleep(0.5)
 
         # Hardware Configuration
+        i2cHandle = SoftI2C(sda=Pin(constants.SDA_PIN), scl=Pin(constants.SCL_PIN), freq=constants.I2C_FREQ)
         Sensor = hrMonitor.HRMonitor( i2cHandle, leds )
 
 Main()
