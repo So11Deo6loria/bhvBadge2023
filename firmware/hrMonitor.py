@@ -13,7 +13,7 @@ class HRMonitor:
 
   def setupSensor(self):
     result = self.i2cHandle.scan()
-    time.sleep(2) # Wait for Sensor to Come Up - TODO: Be scientific about this delay
+    time.sleep(0.9) # Wait for Sensor to Come Up - TODO: Be scientific about this delay
     print( "Setting up sensor" )
     HRMonitor.sensor = MAX30102(i2c=self.i2cHandle)
     HRMonitor.sensor.setup_sensor()
