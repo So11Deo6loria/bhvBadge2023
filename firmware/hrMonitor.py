@@ -36,7 +36,7 @@ class HRMonitor:
     self.sensor.set_active_leds_amplitude(ledAmp)
 
   def filter(self, x_curr):
-    y_curr = self.b0*x_curr + self.b1*self.x_prev - self.a1*self.y_prev
+    y_curr = round(self.b0*x_curr + self.b1*self.x_prev - self.a1*self.y_prev)
     self.x_prev = x_curr
     self.y_prev = y_curr
     return y_curr
@@ -87,7 +87,7 @@ class HRMonitor:
             red_data = self.sensor.pop_red_from_storage()
             ir_data = self.sensor.pop_ir_from_storage()
             
-            if ir_data <= 4500 and ir_data >= 3500:
+            if ir_data <= 4500 and ir_data >= 3200:
                 if count > 100:
                     led.on()
                     filtered = self.filter(ir_data)
