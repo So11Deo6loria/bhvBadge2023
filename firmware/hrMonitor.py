@@ -2,6 +2,7 @@ import time
 import constants
 import leds
 from max30102 import MAX30102
+from machine import Pin
 
 class HRMonitor:
   sensor = None
@@ -9,11 +10,11 @@ class HRMonitor:
   def __init__(self, i2cHandle, ledHandle):
     self.i2cHandle = i2cHandle
     self.ledHandle = ledHandle
-    self.b0 = 0.5
-    self.b1 = 0.1
-    self.a1 = 0.3
-    self.x_prev = 0
-    self.y_prev = 0
+    self.b0 = 0.7
+    self.b1 = 0.7
+    self.a1 = 0.35
+    self.x_prev = 3200
+    self.y_prev = 3200
 
     self.setupSensor()
 
@@ -76,7 +77,8 @@ class HRMonitor:
     # Variables for BPM filtering
     bpm_ema_alpha = 0.1
     bpm_ema = None
-    
+    led = Pin(25, Pin.OUT)
+    count = 0
     while True:
         # Read data from the Max30102
         # red_data, ir_data = read_max30102_data(i2c)
@@ -84,10 +86,18 @@ class HRMonitor:
         if( self.sensor.available() ):            
             red_data = self.sensor.pop_red_from_storage()
             ir_data = self.sensor.pop_ir_from_storage()
-            # print("RAW IR: ", ir_data)
-            filtered = self.filter(ir_data)
-            # print("Filtered: ", filtered)
-            ir_data_array.append(filtered)
+            
+            if ir_data <= 4500 and ir_data >= 3500:
+                if count > 100:
+                    led.on()
+                    filtered = self.filter(ir_data)
+                    print(f"{ir_data};{filtered}")
+                    ir_data_array.append(filtered)
+                else: 
+                    count += 1
+            else:
+               count = 0
+               led.off()
 
             # Limit the size of the array to prevent excessive memory usage
             max_array_size = 100
@@ -97,11 +107,11 @@ class HRMonitor:
             # Calculate heart rate and print it to the console
             heart_rate = self.calculate_heart_rate(ir_data_array)
             if heart_rate is not None and heart_rate > 40 and heart_rate < 200:
-                print("Filtered Heart Rate:", round(heart_rate), "BPM")
+                # print("Filtered Heart Rate:", round(heart_rate), "BPM")
                 pass
             else:
                 print("Heart Rate calculation failed. Not enough peaks detected.")
-
+                pass
             # Wait a moment before taking the next reading
             time.sleep(0.01)
         else:
