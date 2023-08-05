@@ -23,8 +23,8 @@ class LEDS:
    'ce9958','b8732d','b8732d','b8732d','9f633b','9f633b','9f633b'],
   
   'fruitypebbles':
-  ['f0aa37', 'ffd52b', '00ffd7', '2edfb4', '10b990'],
-  
+  ['f0aa37','ffd52b','00ffd7','2edfb4','10b990','9476d6','f23333', 
+   '9476d6','d65a8a','00ffd7','2edfb4','9476d6','f23333','f23333'],  
   'luckycharms':
   ['216209', '8fac06', 'bdd9a3', '56a20d', '91d521'],
   'fruitloops':

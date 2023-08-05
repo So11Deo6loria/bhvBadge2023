@@ -60,25 +60,25 @@ class Main:
 
         # GPIO Initialization
         # ledPin = Pin(constants.PICO_LED_PIN, Pin.OUT) # Can use this eventually
-        # oxPin = Pin(constants.OX_LED_PIN, Pin.OUT)
-        # deoxPin = Pin(constants.DEOX_LED_PIN, Pin.OUT)
+        oxPin = Pin(constants.OX_LED_PIN, Pin.OUT)
+        deoxPin = Pin(constants.DEOX_LED_PIN, Pin.OUT)
         
-        schemes = ["rainbow", "nathan", "heart", 'creepercrunch']
+        schemes = ["rainbow", "nathan", "heart", 'creepercrunch', 'cinnamontoastcrunch', 'applejacks']
         index = 0
         leds = prettyLights.LEDS()
-        leds.updateColorScheme("heart")
+        leds.updateColorScheme("rainbow")
         _thread.start_new_thread(leds.heartbeat, ())
     
+        #Input for the Some Pin that was important. 
         pin = Pin(5, Pin.IN, Pin.PULL_DOWN)
 
         # pin.irq(trigger=Pin.IRQ_RISING, handler=callback)
 
-        #while True:
-        #    time.sleep(.5)
-        #    print("checking")
-        #    if pin.value() == 0:
-        #        print("changing sheme")
-            # if(interrupt_flag!=0):
+        # while True:
+        #     time.sleep(.5)
+        #     print("checking")
+        #     if pin.value() == 0:
+        #        print(f"changing sheme to {schemes[index%(len(schemes)-1)]}")
         #        leds.updateColorScheme(schemes[index%(len(schemes)-1)]) # cycle through color schemes
         #        index+=1
         #        interrupt_flag=0
@@ -115,6 +115,10 @@ class Main:
             #         time.sleep(0.5)
 
         # Hardware Configuration
+
+        cerealClass = cerealInterface.CerealInterface(oxPin, deoxPin)
+        cerealClass.uartShell()
+
         i2cHandle = SoftI2C(sda=Pin(constants.SDA_PIN), scl=Pin(constants.SCL_PIN), freq=constants.I2C_FREQ)
         Sensor = hrMonitor.HRMonitor( i2cHandle, leds )
 

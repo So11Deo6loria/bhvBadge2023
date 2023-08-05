@@ -13,7 +13,7 @@ class HRMonitor:
 
   def setupSensor(self):
     result = self.i2cHandle.scan()
-    time.sleep(2) # Wait for Sensor to Come Up - TODO: Be scientific about this delay
+    time.sleep(0.9) # Wait for Sensor to Come Up - TODO: Be scientific about this delay
     print( "Setting up sensor" )
     HRMonitor.sensor = MAX30102(i2c=self.i2cHandle)
     HRMonitor.sensor.setup_sensor()
@@ -27,6 +27,29 @@ class HRMonitor:
     self.sensor.set_pulse_amplitude_red(pulseAmp)
     self.sensor.set_pulse_amplitude_it(pulseAmp)
     self.sensor.set_active_leds_amplitude(ledAmp)
+    self.sensor.set_sample_rate(100)
+
+
+#10Create an input and read only the oldest value once full.   If finger is removed clear input buffer 
+
+
+  def average_distance_between_elements(self, arr):
+    n = len(arr)
+    if n < 2:
+        raise ValueError("Array must contain at least two elements.")
+
+    total_distance = 0
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            total_distance += abs(i - j)
+
+    # The number of unique pairs of elements (n choose 2)
+    num_pairs = n * (n - 1) / 2
+
+    average_distance = total_distance / num_pairs
+    return average_distance
+
 
   def calculate_heart_rate(self, ir_data_array, sample_rate=100, ema_alpha=0.2, moving_average_length=5):
     # Check if the input data is sufficient for moving average filtering
@@ -54,7 +77,10 @@ class HRMonitor:
 
     # Calculate time between consecutive peaks and estimate heart rate in BPM
     if len(peaks) >= 2:
-        time_between_peaks = (peaks[-1] - peaks[0]) / sample_rate  # Time in seconds between first and last peak
+        print( f"Peaks: {len(peaks)}" )
+        time_between_peaks = self.average_distance_between_elements(peaks) # Time in seconds between first and last peak
+        # time_between_peaks = (peaks[-1] - peaks[0]) / sample_rate  # Time in seconds between first and last peak
+        
         heart_rate_bpm = 60 / time_between_peaks
 
         # Range check for BPM values
@@ -96,23 +122,26 @@ class HRMonitor:
             ir_data = self.sensor.pop_ir_from_storage()
             ir_data_array.append(ir_data)
 
-            # Limit the size of the array to prevent excessive memory usage
-            max_array_size = 100
-            if len(ir_data_array) > max_array_size:
-                ir_data_array = ir_data_array[-max_array_size:]
+            if(red_data > 3000):
+                # Limit the size of the array to prevent excessive memory usage
+                max_array_size = 500
+                if len(ir_data_array) > max_array_size:
+                    ir_data_array = ir_data_array[-max_array_size:]
 
-            # Calculate heart rate and print it to the console
-            heart_rate = self.calculate_heart_rate(ir_data_array)
-            if heart_rate is not None:
-                if bpm_ema is None:
-                    bpm_ema = heart_rate
+                # Calculate heart rate and print it to the console
+                heart_rate = self.calculate_heart_rate(ir_data_array)
+                if heart_rate is not None:
+                    if bpm_ema is None:
+                        bpm_ema = heart_rate
+                    else:
+                        bpm_ema = bpm_ema_alpha * heart_rate + (1 - bpm_ema_alpha) * bpm_ema
+                    print("Filtered Heart Rate:", bpm_ema, "BPM")
                 else:
-                    bpm_ema = bpm_ema_alpha * heart_rate + (1 - bpm_ema_alpha) * bpm_ema
-                print("Filtered Heart Rate:", bpm_ema, "BPM")
-            else:
-                print("Heart Rate calculation failed. Not enough peaks detected.")
+                    print("Heart Rate calculation failed. Not enough peaks detected.")
 
-            # Wait a moment before taking the next reading
-            time.sleep(0.1)
+                # Wait a moment before taking the next reading
+                time.sleep(0.025)
+            else:
+                print("finger not aligned")
         else:
-            time.sleep(0.05)
+            time.sleep(0.025)

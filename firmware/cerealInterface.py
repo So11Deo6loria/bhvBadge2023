@@ -6,6 +6,8 @@ from machine import UART
 
 
 logo = """
+ 
+
                  ,*******,                             .*****,                  
                      ,*******                       *******                     
              .     *****  *****                    ******                       
@@ -18,7 +20,7 @@ logo = """
                              ***       ,*** *******                             
                              ****    ***.    *****                              
                              ,***,.***    ,*** ,***                             
-                              ,*****    ***     ****                            
+                              ,*****    ***     ****                         
                               ***********       ,***                            
                            ,*************,      ****                            
                    ....,************  ********  ****  *********.                
@@ -41,12 +43,17 @@ def uartWhoami(uart):
     #just a joke
     uart.write("heart\r\n")
 
+def uartPrompt(uart):
+  prompt="\r\n> "
+  uart.write(prompt)
+   
 
 def uartHelp(uart):
-  uart.write("help: displays this help window\r\n")
-  uart.write("version: displays software version number\r\n")
-  uart.write("whoami: your name\r\n")
-  uart.write("secret: ...\r\n")
+  uart.write("\r\nAvailable Commands: \r\n")
+  uart.write(" help:    Displays this help window\r\n")
+  uart.write(" version: Displays software version number\r\n")
+  uart.write(" whoami:  your name\r\n")
+  uart.write(" secret:  ...\r\n")
       
 class CerealInterface:
   def __init__(self, pin1, pin2):
@@ -60,9 +67,9 @@ class CerealInterface:
     uart = UART(0, baudrate=constants.BAUD_RATE, tx=machine.Pin(constants.CEREAL_TX_PIN), rx=machine.Pin(constants.CEREAL_RX_PIN))
     print(uart) #for debugging/uart info
     
-    prompt="Enter your command: "
     uart.write(logo)
-    uart.write(prompt)
+    uartPrompt(uart)
+
     command = [] # start with blank string
     #Run Shell
     while True:
@@ -83,14 +90,18 @@ class CerealInterface:
                 elif commandString == "":
                    uart.write(prompt)
                 else:
-                    uart.write("cmd not recognized try again ")
+                    uart.write("cmd not recognized try again \r\n")
                     uart.write(prompt)
             elif (data == b'\x7f'): # backspace
+                uart.write(data)
                 if len(command) > 0:
                   command.pop()
             else:
                 data = data.decode('utf-8') #convert data to string
+                uart.write(data)
                 command.append(data)# add value
+
+
 
   def hexListToRGBTupleList( self, cerealArray ):
     colorArray = []
