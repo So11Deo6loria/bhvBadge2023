@@ -1,6 +1,5 @@
 import time
-import constants
-import leds
+import utime
 from max30102 import MAX30102
 from machine import Pin
 
@@ -15,6 +14,15 @@ class HRMonitor:
     self.a1 = 0.35
     self.x_prev = 3200
     self.y_prev = 3200
+    self.irRollingAverageBufferLen = 30
+    self.filteredValuesCount = 0
+    self.irRollingAvgPeakBufferLen = 5
+    self.irRollingAverage = [0]*self.irRollingAverageBufferLen
+    self.irBuffer = [0]*3
+    self.recentMax=0
+    self.recentMin=0
+  
+
 
     self.setupSensor()
 
@@ -24,6 +32,8 @@ class HRMonitor:
     print( "Setting up sensor" )
     HRMonitor.sensor = MAX30102(i2c=self.i2cHandle)
     HRMonitor.sensor.setup_sensor()
+    HRMonitor.sensor.set_sample_rate(100)
+    
     print( "It's alive!" )
     self.hrRunLoop()
 
@@ -36,83 +46,99 @@ class HRMonitor:
     self.sensor.set_active_leds_amplitude(ledAmp)
 
   def filter(self, x_curr):
-    y_curr = round(self.b0*x_curr + self.b1*self.x_prev - self.a1*self.y_prev)
+    y_curr = self.b0*x_curr + self.b1*self.x_prev - self.a1*self.y_prev
     self.x_prev = x_curr
     self.y_prev = y_curr
     return y_curr
 
   def find_peaks(self, ir_data, threshold):
-     peaks = []
-     for i in range(1, len(ir_data)-1):
+    peaks = []
+    for i in range(1, len(ir_data)-1):
         if ir_data[i] > ir_data[i-1] and ir_data[i] > ir_data[i+1] and ir_data[i] > threshold:
-           peaks.append(i)
-     return peaks
+          peaks.append(i)
+    return peaks
 
-  def calculate_heart_rate(self, ir_data_array, sample_rate=100, ema_alpha=0.2, moving_average_length=3):
-    peak_values = self.find_peaks(ir_data_array, 750)
-    if(len(peak_values) >= 2):
-       time_interval = (peak_values[-1] - peak_values[0])/sample_rate
-       heart_rate = 60/time_interval
-       return heart_rate
-    return None
+  def oohIsThatAPeak( self, ir_data ):
 
-  
+    self.filteredValue = self.filter(ir_data)
+    self.irRollingAverage.append(ir_data)
+    self.irRollingAverage.pop(0)
+    self.irBuffer.append(sum(self.irRollingAverage[-self.irRollingAvgPeakBufferLen:])/self.irRollingAvgPeakBufferLen) 
+    self.irBuffer.pop(0)
+    self.filteredValuesCount += 1
+    
+    # self.recentMax = max(self.irRollingAverage)
+    # self.recentMin = min(self.irRollingAverage)
 
-  def hrRunLoop(self):        
+    if (self.filteredValuesCount>self.irRollingAverageBufferLen)and (self.irBuffer[1] > self.irBuffer[0] and self.irBuffer[1] > self.irBuffer[2]) and ((self.irBuffer[1] - self.irBuffer[0]) < 20) and ((self.irBuffer[1] - self.irBuffer[2]) < 20): #and ((self.irBuffer[1]-self.recentMin)/(self.recentMax-self.recentMin)> 0.70 )
+      return True
+    return False
+    
+
+  # def calculate_heart_rate(self, ir_data_array, sample_rate=100, ema_alpha=0.2, moving_average_length=3):
+  #   peak_values = self.find_peaks(ir_data_array, 750)
+  #   if(len(peak_values) >= 2):
+  #     time_interval = (peak_values[-1] - peak_values[0])/sample_rate
+  #     heart_rate = 60/time_interval
+  #     return heart_rate
+  #   return None
+
+  def hrRunLoop(self):
     # Check if the Max30102 is present
     self.sensor.check()
+    recentPeaks = [utime.ticks_ms()]*3
 
     time.sleep(2)
 
     print("Checking Sensor")
     self.sensor.check()
     if( not self.sensor.available() ):
-        print("Max30102 not found. Check wiring.")
-        return 
+      print("Max30102 not found. Check wiring.")
+      return 
     
     # Configure the Max30102
     self.configure_max30102(self.i2cHandle)
 
-    ir_data_array = []
-    # Variables for BPM filtering
-    bpm_ema_alpha = 0.1
-    bpm_ema = None
+    # Using the Pi LED for HR Feedback
     led = Pin(25, Pin.OUT)
     count = 0
+    hrBuffer = [0]*3
+    heartRate = 0
     while True:
         # Read data from the Max30102
-        # red_data, ir_data = read_max30102_data(i2c)
         self.sensor.check()
-        if( self.sensor.available() ):            
-            red_data = self.sensor.pop_red_from_storage()
-            ir_data = self.sensor.pop_ir_from_storage()
-            
-            if ir_data <= 4500 and ir_data >= 3200:
-                if count > 100:
-                    led.on()
-                    filtered = self.filter(ir_data)
-                    print(f"{ir_data};{filtered}")
-                    ir_data_array.append(filtered)
-                else: 
-                    count += 1
+       
+        if( self.sensor.available() ):
+            redReading = self.sensor.pop_red_from_storage()
+            irReading = self.sensor.pop_ir_from_storage()
+            count += 1
+            if irReading <= 4000 and irReading >= 2800:
+                led.on()
+                if count > 10:
+                    if(self.oohIsThatAPeak(irReading)):
+                      led.off()
+                      recentPeaks.append(utime.ticks_ms())
+                      recentPeaks.pop(0)
+
+                      #calculate the BPM between each peak, if we have three consistent beats, update the pretty lights...
+                      newGap = utime.ticks_diff(recentPeaks[2],recentPeaks[1])
+
+                      heartRate = 60/newGap*1000                      
+                      hrBuffer.append(heartRate)
+                      hrBuffer.pop(0)
+
+                      print(f"HR:{hrBuffer} updating lights.... ")
+                      if(max(hrBuffer) <= min(hrBuffer) * 1.2):        
+                        #we have a consitent gap of samples between peaks, lets call it a HR so I can get some sleep...
+                        print("Updating LEDs")
+                        self.ledHandle.updateBPM( max(min(hrBuffer[-1],200),40))
+
+                    # print(f"{irReading} {self.irBuffer[-1]} {self.recentMin} {self.recentMax} {beat}")                    
             else:
                count = 0
+               self.filteredValuesCount = 0
                led.off()
 
-            # Limit the size of the array to prevent excessive memory usage
-            max_array_size = 100
-            if len(ir_data_array) > max_array_size:
-                ir_data_array = ir_data_array[-max_array_size:]
-
-            # Calculate heart rate and print it to the console
-            heart_rate = self.calculate_heart_rate(ir_data_array)
-            if heart_rate is not None and heart_rate > 40 and heart_rate < 200:
-                # print("Filtered Heart Rate:", round(heart_rate), "BPM")
-                pass
-            else:
-                print("Heart Rate calculation failed. Not enough peaks detected.")
-                pass
-            # Wait a moment before taking the next reading
             time.sleep(0.01)
         else:
-            time.sleep(0.05)
+            time.sleep(0.01)

@@ -63,8 +63,8 @@ class Main:
         # oxPin = Pin(constants.OX_LED_PIN, Pin.OUT)
         # deoxPin = Pin(constants.DEOX_LED_PIN, Pin.OUT)
         
-        schemes = ["rainbow", "nathan", "heart", 'creepercrunch']
-        index = 0
+        # schemes = ["rainbow", "nathan", "heart", 'creepercrunch']
+        # index = 0
         leds = prettyLights.LEDS()
         leds.updateColorScheme("heart")
         _thread.start_new_thread(leds.heartbeat, ())

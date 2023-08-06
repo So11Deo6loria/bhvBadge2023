@@ -1,4 +1,5 @@
 import time
+import utime
 import constants
 from neopixel import NeoPixel
 import machine
@@ -79,14 +80,14 @@ class LEDS:
   #   {'startTime': 0.6232,	'pulseWidth': 0.4656}] #14
   
   ledConfig = [ \
-    {'startTime': 0.84584, 'pulseWidth': 0.4508}, #1
-    {'startTime': 0.8712, 'pulseWidth': 0.6581}, #2
+    {'startTime': 0.6484, 'pulseWidth': 0.5508}, #1
+    {'startTime': 0.6712, 'pulseWidth': 0.7581}, #2
     {'startTime': 0.1585, 'pulseWidth': 0.4541}, #3
     {'startTime': 0.2585, 'pulseWidth': 0.3041}, #4
     {'startTime': 0.45080, 'pulseWidth': 0.445}, #5
     {'startTime': 0.5223, 'pulseWidth': 0.4670}, #6
     {'startTime': 0.6000, 'pulseWidth': 0.3256}, #7
-    {'startTime': 0.8712, 'pulseWidth': 0.6581}, #8
+    {'startTime': 0.6712, 'pulseWidth': 0.7581}, #8
     {'startTime': 0.1585, 'pulseWidth': 0.4541}, #9
     {'startTime': 0.2589, 'pulseWidth': 0.3016}, #10
     {'startTime': 0.4513, 'pulseWidth': 0.442}, #11
@@ -105,7 +106,8 @@ class LEDS:
     self.strand = NeoPixel(ledDataPin, 7) #[0]*7 
     #
     self.strand2 = NeoPixel(deoxPin, 7) # [0]*7
-    self.bpm = 100
+    self.bpm = 60
+    self.newBPM = 0
     self.colorScheme = "heart"
     self.ledBaseColors = [[0]*3]*14
 
@@ -120,7 +122,7 @@ class LEDS:
     return True    
 
   def updateBPM( self, newBPM ):
-    self.bpm = newBPM
+    self.newBPM = newBPM
 
   def updateColorScheme( self, newColorScheme ):
     self.colorScheme = newColorScheme
@@ -148,27 +150,33 @@ class LEDS:
   
   def heartbeat(self): 
     timeDelay = .025
-    currentTime = 0
-
+    currentTime = utime.ticks_ms()
+    offset = 0
     # self.updateColorScheme('nathan')
     # print(self.ledBaseColors)//
 
     while( True ):
-      # print(f'Time: {currentTime}/')
-      secPerBeat = 60/self.bpm
+      secPerBeat = 60000/self.bpm
+
+      if(self.newBPM != 0 ): 
+        #need to get smooth transitions,  as a shortcut going to add an offset to place the currentTime next in the same place relative to the cycle. 
+        offset = ((currentTime+offset)%secPerBeat)*self.bpm/self.newBPM - currentTime
+        self.bpm = self.newBPM
+        self.newBPM = 0
+
+
+      currentTime = utime.ticks_ms()
+      # print(currentTime)
+
       for index, led in enumerate(self.ledConfig):
-        brightness = self.calculateBrightness( secPerBeat, currentTime, led['startTime']*secPerBeat, led['pulseWidth']*secPerBeat )
+        brightness = self.calculateBrightness( secPerBeat, currentTime+offset, led['startTime']*secPerBeat, led['pulseWidth']*secPerBeat )
         # print(f'led: {index+1}, brightness: {brightness}')
         if index < 7:
           self.strand2[index]=tuple(round(i * 0.5* brightness) for i in self.ledBaseColors[index])
         else:
           self.strand[index-7]=tuple(round(i *0.5* brightness) for i in self.ledBaseColors[index])
           
-        # print(self.strand)
-        # print(self.strand2)
       self.strand2.write()
       self.strand.write()
       
       time.sleep(timeDelay)
-      
-      currentTime += timeDelay
