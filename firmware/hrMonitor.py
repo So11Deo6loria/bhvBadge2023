@@ -22,8 +22,6 @@ class HRMonitor:
     self.recentMax=0
     self.recentMin=0
   
-
-
     self.setupSensor()
 
   def setupSensor(self):
@@ -32,18 +30,10 @@ class HRMonitor:
     print( "Setting up sensor" )
     HRMonitor.sensor = MAX30102(i2c=self.i2cHandle)
     HRMonitor.sensor.setup_sensor()
-    HRMonitor.sensor.set_sample_rate(100)
+    HRMonitor.sensor.set_sample_rate(200)
     
     print( "It's alive!" )
-    self.hrRunLoop()
-
-  def configure_max30102(self, i2c):
-    # My Code
-    pulseAmp = 0x1F
-    ledAmp = 0x1F
-    self.sensor.set_pulse_amplitude_red(pulseAmp)
-    self.sensor.set_pulse_amplitude_it(pulseAmp)
-    self.sensor.set_active_leds_amplitude(ledAmp)
+    self.sensor.check()
 
   def filter(self, x_curr):
     y_curr = self.b0*x_curr + self.b1*self.x_prev - self.a1*self.y_prev
@@ -67,28 +57,17 @@ class HRMonitor:
     self.irBuffer.pop(0)
     self.filteredValuesCount += 1
     
-    # self.recentMax = max(self.irRollingAverage)
-    # self.recentMin = min(self.irRollingAverage)
-
     if (self.filteredValuesCount>self.irRollingAverageBufferLen)and (self.irBuffer[1] > self.irBuffer[0] and self.irBuffer[1] > self.irBuffer[2]) and ((self.irBuffer[1] - self.irBuffer[0]) < 20) and ((self.irBuffer[1] - self.irBuffer[2]) < 20): #and ((self.irBuffer[1]-self.recentMin)/(self.recentMax-self.recentMin)> 0.70 )
       return True
     return False
     
-
-  # def calculate_heart_rate(self, ir_data_array, sample_rate=100, ema_alpha=0.2, moving_average_length=3):
-  #   peak_values = self.find_peaks(ir_data_array, 750)
-  #   if(len(peak_values) >= 2):
-  #     time_interval = (peak_values[-1] - peak_values[0])/sample_rate
-  #     heart_rate = 60/time_interval
-  #     return heart_rate
-  #   return None
-
-  def hrRunLoop(self):
-    # Check if the Max30102 is present
-    self.sensor.check()
-    recentPeaks = [utime.ticks_ms()]*3
-
-    time.sleep(2)
+  def shutdown(self):
+    self.sensor.shutdown()
+    self.picoLED.off()
+  
+  def wakeUp(self):
+     self.sensor.wakeup()
+  def configureHRSensor(self):
 
     print("Checking Sensor")
     self.sensor.check()
@@ -97,48 +76,54 @@ class HRMonitor:
       return 
     
     # Configure the Max30102
-    self.configure_max30102(self.i2cHandle)
+    pulseAmp = 0x1F
+    ledAmp = 0x1F
+    self.sensor.set_pulse_amplitude_red(pulseAmp)
+    self.sensor.set_pulse_amplitude_it(pulseAmp)
+    self.sensor.set_active_leds_amplitude(ledAmp)
 
     # Using the Pi LED for HR Feedback
-    led = Pin(25, Pin.OUT)
-    count = 0
-    hrBuffer = [0]*3
-    heartRate = 0
-    while True:
+    self.picoLED = Pin(25, Pin.OUT)
+    self.rawReadingCount = 0
+    self.recentPeaks = [utime.ticks_ms()]*3
+    self.bpmReadings = [0]*3
+     
+     
+
+  def hrRunLoop(self):
+    # self.configureHRSensor()
+
+    # while True:
         # Read data from the Max30102
-        self.sensor.check()
-       
-        if( self.sensor.available() ):
-            redReading = self.sensor.pop_red_from_storage()
+        if( self.sensor.safe_check(10) ):
+            # redReading = self.sensor.pop_red_from_storage()
             irReading = self.sensor.pop_ir_from_storage()
-            count += 1
+        
+            self.rawReadingCount += 1
+            # print(irReading)
             if irReading <= 4000 and irReading >= 2800:
-                led.on()
-                if count > 10:
+                self.picoLED.on()
+                if self.rawReadingCount > 10:
                     if(self.oohIsThatAPeak(irReading)):
-                      led.off()
-                      recentPeaks.append(utime.ticks_ms())
-                      recentPeaks.pop(0)
+                      self.picoLED.off()
+                      self.recentPeaks.append(utime.ticks_ms())
+                      self.recentPeaks.pop(0)
 
                       #calculate the BPM between each peak, if we have three consistent beats, update the pretty lights...
-                      newGap = utime.ticks_diff(recentPeaks[2],recentPeaks[1])
+                      newGap = utime.ticks_diff(self.recentPeaks[2],self.recentPeaks[1])
 
-                      heartRate = 60/newGap*1000                      
-                      hrBuffer.append(heartRate)
-                      hrBuffer.pop(0)
+                      self.bpmReadings.append(60000/newGap)
+                      self.bpmReadings.pop(0)
 
-                      print(f"HR:{hrBuffer} updating lights.... ")
-                      if(max(hrBuffer) <= min(hrBuffer) * 1.2):        
+                      # print(f"HR:{self.bpmReadings}")
+                      if(max(self.bpmReadings) <= min(self.bpmReadings) * 1.2):        
                         #we have a consitent gap of samples between peaks, lets call it a HR so I can get some sleep...
-                        print("Updating LEDs")
-                        self.ledHandle.updateBPM( max(min(hrBuffer[-1],200),40))
-
-                    # print(f"{irReading} {self.irBuffer[-1]} {self.recentMin} {self.recentMax} {beat}")                    
+                        self.ledHandle.updateBPM( max(min(self.bpmReadings[-1],200),40))
+                    
+                    # print(f"{irReading} {self.irBuffer[-1]} {self.recentMin} {self.recentMax}")                    
             else:
-               count = 0
+               self.rawReadingCount = 0
                self.filteredValuesCount = 0
-               led.off()
-
-            time.sleep(0.01)
-        else:
-            time.sleep(0.01)
+               self.picoLED.off()
+        # else:
+        #   print('no readings')
