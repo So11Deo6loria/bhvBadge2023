@@ -4,6 +4,7 @@ LED_TESTING = True
 HR_TESTING = True
 
 # Board Configuration
+BUTTON = 5
 SDA_PIN = 6
 SCL_PIN = 7
 OX_LED_PIN = 19
