@@ -18,6 +18,10 @@ class LEDS:
   'nathan':
   ['00ff00','00ff00','00ff00','00ff00','00ff00','00ff00','00ff00', 
    '0000ff','0000ff','0000ff','00006f','0000ff','0000ff','0000ff'],
+  
+  'zombie':
+  ['ffff00','00ff00','ffff00','00ff00','ffff00','00ff00','ffff00',
+   '00ff00','ffff00','00ff00','ffff00','00ff00','ffff00','00ff00'],
 
   'green':
   ['00ff00']*14,
@@ -61,9 +65,6 @@ class LEDS:
   'applejacks':
   ['3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 
    'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23'],
-
-   'oreo':
-   ['f2f0ed','171716'],
 
    'booberry':
    ['8362a6','68bce3','4a7e96','fc0505'],
@@ -149,12 +150,15 @@ class LEDS:
     self.newBPM = newBPM
 
   def updateColorScheme( self, newColorScheme ):
-    self.colorScheme = newColorScheme
+    print( f'Changing color to: {newColorScheme}')
         
     #sets up a base color list/array thats easier to work with from the generic hex values that are easier to edit.  Done only on change for efficiency...
     if newColorScheme in self.colorSchemes:
+      self.colorScheme = newColorScheme
       for index, color in enumerate(self.colorSchemes[newColorScheme]):
         self.ledBaseColors[index]=list(bytearray.fromhex(self.colorSchemes[newColorScheme][index]))
+    else:
+      print("Could not Find Color")
   
   def calculateBrightness( self, cycleTime, currentTime, startTime, pulseWidth):
     time = currentTime%cycleTime
