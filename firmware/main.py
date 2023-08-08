@@ -46,9 +46,6 @@ class Main:
             return False
     def runLoop(self):
 
-
-
-
         config = self.read_config()
         if(config):
             print("Loading following configuration:")
@@ -63,7 +60,6 @@ class Main:
             self.sleepTimeout = 300 # 300 seconds 
 
 
-
         self.button = Pin(constants.BUTTON, Pin.IN, Pin.PULL_UP)
         self.button.irq(lambda e: print("button event!"), Pin.IRQ_FALLING)
         
@@ -76,6 +72,8 @@ class Main:
         self.leds.wakeup()
 
         #Initialize HW for HR Sensor        
+
+
         i2cHandle = SoftI2C(sda=Pin(constants.SDA_PIN), scl=Pin(constants.SCL_PIN), freq=constants.I2C_FREQ)
         self.sensor = hrMonitor.HRMonitor( i2cHandle, self.leds )
                  

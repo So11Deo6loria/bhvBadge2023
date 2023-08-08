@@ -43,6 +43,7 @@ class HRMonitor:
 
   def find_peaks(self, ir_data, threshold):
     peaks = []
+
     for i in range(1, len(ir_data)-1):
         if ir_data[i] > ir_data[i-1] and ir_data[i] > ir_data[i+1] and ir_data[i] > threshold:
           peaks.append(i)
@@ -69,6 +70,7 @@ class HRMonitor:
      self.sensor.wakeup()
   def configureHRSensor(self):
 
+
     print("Checking Sensor")
     self.sensor.check()
     if( not self.sensor.available() ):
@@ -87,9 +89,8 @@ class HRMonitor:
     self.rawReadingCount = 0
     self.recentPeaks = [utime.ticks_ms()]*3
     self.bpmReadings = [0]*3
-     
-     
-
+    
+    
   def hrRunLoop(self):
     # self.configureHRSensor()
 

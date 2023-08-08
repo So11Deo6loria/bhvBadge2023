@@ -6,6 +6,8 @@ from machine import UART
 
 
 logo = """
+ 
+
                  ,*******,                             .*****,                  
                      ,*******                       *******                     
              .     *****  *****                    ******                       
@@ -18,7 +20,7 @@ logo = """
                              ***       ,*** *******                             
                              ****    ***.    *****                              
                              ,***,.***    ,*** ,***                             
-                              ,*****    ***     ****                            
+                              ,*****    ***     ****                         
                               ***********       ,***                            
                            ,*************,      ****                            
                    ....,************  ********  ****  *********.                
@@ -41,12 +43,17 @@ def uartWhoami(uart):
     #just a joke
     uart.write("heart\r\n")
 
+def uartPrompt(uart):
+  prompt="\r\n> "
+  uart.write(prompt)
+   
 
 def uartHelp(uart):
-  uart.write("help: displays this help window\r\n")
-  uart.write("version: displays software version number\r\n")
-  uart.write("whoami: your name\r\n")
-  uart.write("secret: ...\r\n")
+  uart.write("\r\nAvailable Commands: \r\n")
+  uart.write(" help:    Displays this help window\r\n")
+  uart.write(" version: Displays software version number\r\n")
+  uart.write(" whoami:  your name\r\n")
+  uart.write(" secret:  ...\r\n")
       
 class CerealInterface:
   def __init__(self):
@@ -61,6 +68,7 @@ class CerealInterface:
     prompt="Enter your command: "
     self.uart.write(logo)
     self.uart.write(prompt)
+
     command = [] # start with blank string
     #Run Shell
     while True:
@@ -83,11 +91,12 @@ class CerealInterface:
                 else:
                     self.uart.write("cmd not recognized try again ")
                     self.uart.write(prompt)
+
             elif (data == b'\x7f'): # backspace
+                uart.write(data)
                 if len(command) > 0:
                   command.pop()
             else:
                 data = data.decode('utf-8') #convert data to string
+                uart.write(data)
                 command.append(data)# add value
-
-  
