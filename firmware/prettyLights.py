@@ -49,14 +49,14 @@ class LEDS:
   ['f0aa37','ffd52b','00ffd7','2edfb4','10b990','9476d6','f23333', 
    '9476d6','d65a8a','00ffd7','2edfb4','9476d6','f23333','f23333'],
   
-  'luckycharms':
-  ['216209', '8fac06', 'bdd9a3', '56a20d', '91d521'],
+  # 'luckycharms':
+  # ['216209', '8fac06', 'bdd9a3', '56a20d', '91d521'],
   
-  'fruitloops':
-  ['ff0000', 'ffe700', '7cff00', 'c900ff', '00dfff'],
+  # 'fruitloops':
+  # ['ff0000', 'ffe700', '7cff00', 'c900ff', '00dfff'],
   
-  'trix':
-  ['58e3ff', '87a2ff', 'af7ffc', 'da4e7d', 'f14848'], 
+  # 'trix':
+  # ['58e3ff', '87a2ff', 'af7ffc', 'da4e7d', 'f14848'], 
   
   'rainbow':
   ['ff008f', 'ff00ff', '0010ff', '00cfff', '00ff00', 'ff5500', 'ff1500',
@@ -64,22 +64,22 @@ class LEDS:
 
   'applejacks':
   ['3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 
-   'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23'],
+   'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23']
 
-   'booberry':
-   ['8362a6','68bce3','4a7e96','fc0505'],
+  #  'booberry':
+  #  ['8362a6','68bce3','4a7e96','fc0505'],
 
-    'creepercrunch':
-   ['8fe38f','0f800f','0db50d','609e60','004500'],
+  #   'creepercrunch':
+  #  ['8fe38f','0f800f','0db50d','609e60','004500'],
 
-   'reesespuffs':
-   ['fe5200','551e0a','fdef14'],
+  #  'reesespuffs':
+  #  ['fe5200','551e0a','fdef14'],
 
-   'carmellacreeper':
-   ['22b32c','a2b322','e56fed','ed6fb7'],
+  #  'carmellacreeper':
+  #  ['22b32c','a2b322','e56fed','ed6fb7'],
 
-   'frankenberry':
-   ['ed6fb7','6fc1ed','cf84f0','e5dfe8']
+  #  'frankenberry':
+  #  ['ed6fb7','6fc1ed','cf84f0','e5dfe8']
 }
 
   startupConfig = [ \

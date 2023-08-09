@@ -1,5 +1,5 @@
 {
-  "startupColor": "heartbeat",
-  "heartbeatColor": "heartbeat",
-  "sleepTimeout": 300
+  "startupColor": "heart",
+  "heartbeatColor": "heart",
+  "sleepTimeout": 600
 }

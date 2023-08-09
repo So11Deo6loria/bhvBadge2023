@@ -55,8 +55,8 @@ class Main:
             self.sleepTimeout = config['sleepTimeout']
         else:
             print("Loading default configuration")
-            self.startupColor = 'heartbeat',
-            self.heartbeatColor = 'heartbeat'
+            self.startupColor = 'heart',
+            self.heartbeatColor = 'heart'
             self.sleepTimeout = 300 # 300 seconds 
 
 
