@@ -7,7 +7,7 @@ import math
 from machine import Pin, Timer, SoftI2C
 
 
-class LEDS:  
+class LEDS:
   global timeDelay
   colorScheme = 'heart'
   colorSchemes = {
@@ -15,10 +15,14 @@ class LEDS:
   ['0000ff','0000ff','0000ff','0000ff','0000ff','0000ff','0000ff',
    'ff0000','ff0000','ff0000','ff0000','ff0000','ff0000','ff0000'],
 
+  'makers':
+  ['ee0A10', 'EE1A20', '000000', 'F9F7DE', '184593', 'ff3200', 'FF6200',
+   'EE1A20', '000000', 'F9F7DE', '184593', 'ff3200', 'FF6200','ffffff',],
+
   'nathan':
-  ['00ff00','00ff00','00ff00','00ff00','00ff00','00ff00','00ff00', 
+  ['00ff00','00ff00','00ff00','00ff00','00ff00','00ff00','00ff00',
    '0000ff','0000ff','0000ff','00006f','0000ff','0000ff','0000ff'],
-  
+
   'zombie':
   ['ffff00','00ff00','ffff00','00ff00','ffff00','00ff00','ffff00',
    '00ff00','ffff00','00ff00','ffff00','00ff00','ffff00','00ff00'],
@@ -41,29 +45,29 @@ class LEDS:
   'purple':
   ['ff00ff']*14,
 
-  'cinnamontoastcrunch': 
+  'cinnamontoastcrunch':
   ['ce9958','ce9958','724705','724705','d8d09f','d8d09f','d8d09f',
    'ce9958','b8732d','b8732d','b8732d','9f633b','9f633b','9f633b'],
-  
+
   'fruitypebbles':
-  ['f0aa37','ffd52b','00ffd7','2edfb4','10b990','9476d6','f23333', 
+  ['f0aa37','ffd52b','00ffd7','2edfb4','10b990','9476d6','f23333',
    '9476d6','d65a8a','00ffd7','2edfb4','9476d6','f23333','f23333'],
-  
+
   # 'luckycharms':
   # ['216209', '8fac06', 'bdd9a3', '56a20d', '91d521'],
-  
+
   # 'fruitloops':
   # ['ff0000', 'ffe700', '7cff00', 'c900ff', '00dfff'],
-  
+
   # 'trix':
-  # ['58e3ff', '87a2ff', 'af7ffc', 'da4e7d', 'f14848'], 
-  
+  # ['58e3ff', '87a2ff', 'af7ffc', 'da4e7d', 'f14848'],
+
   'rainbow':
   ['ff008f', 'ff00ff', '0010ff', '00cfff', '00ff00', 'ff5500', 'ff1500',
    'ff00ff', '0020ff', '00cfff', '00ff00', 'ffaf00', 'ff1500','ff0000',],
 
   'applejacks':
-  ['3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 
+  ['3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e',
    'e88f23', '7a4606', '3cbf2e', 'e88f23', '7a4606', '3cbf2e', 'e88f23']
 
   #  'booberry':
@@ -97,7 +101,7 @@ class LEDS:
     {'startTime': 0.2241, 'pulseWidth': 0.50}, #12
     {'startTime': 0.3065, 'pulseWidth': 0.50}, #13
     {'startTime': 0.3417,	'pulseWidth': 0.50}] #14
-  
+
   ledConfig = [ \
     {'startTime': 0.6484, 'pulseWidth': 0.5508}, #1
     {'startTime': 0.6712, 'pulseWidth': 0.7581}, #2
@@ -113,7 +117,7 @@ class LEDS:
     {'startTime': 0.5723, 'pulseWidth': 0.2660}, #12
     {'startTime': 0.5862, 'pulseWidth': 0.2656}, #13
     {'startTime': 0.6032,	'pulseWidth': 0.3256}] #14
-  
+
   def __init__(self):
     # This feels dumb
 
@@ -122,7 +126,7 @@ class LEDS:
     # ledControl = Pin( 25, Pin.OUT)
     self.ledPower = Pin( 22, Pin.OUT)
     self.ledPower.on()
-    self.strand = NeoPixel(ledDataPin, 7) #[0]*7 
+    self.strand = NeoPixel(ledDataPin, 7) #[0]*7
     #
     self.strand2 = NeoPixel(deoxPin, 7) # [0]*7
     self.bpm = 60
@@ -133,15 +137,15 @@ class LEDS:
     self.secPerBeat = 1000
 
     self.updateColorScheme(self.colorScheme)
-  
+
   def shutdown(self):
-    for led in range(7): 
+    for led in range(7):
       self.strand[led] = tuple([0,0,0])
       self.strand2[led] = tuple([0,0,0])
-    self.strand.write()      
+    self.strand.write()
     self.strand2.write()
     self.ledPower.off()
-    return True   
+    return True
 
   def wakeup(self):
     self.ledPower.on()
@@ -151,7 +155,7 @@ class LEDS:
 
   def updateColorScheme( self, newColorScheme ):
     print( f'Changing color to: {newColorScheme}')
-        
+
     #sets up a base color list/array thats easier to work with from the generic hex values that are easier to edit.  Done only on change for efficiency...
     if newColorScheme in self.colorSchemes:
       self.colorScheme = newColorScheme
@@ -159,7 +163,7 @@ class LEDS:
         self.ledBaseColors[index]=list(bytearray.fromhex(self.colorSchemes[newColorScheme][index]))
     else:
       print("Could not Find Color")
-  
+
   def calculateBrightness( self, cycleTime, currentTime, startTime, pulseWidth):
     time = currentTime%cycleTime
     endTime = startTime+pulseWidth
@@ -172,9 +176,9 @@ class LEDS:
       else:
         return 0.5 - 0.5 * math.cos((time+cycleTime - startTime) / pulseWidth * 2 * math.pi )
     else:
-      # print(   f'  current:{currentTime}/{time}, start:{startTime}, end:{endTime}, pulseW :{pulseWidth}') 
+      # print(   f'  current:{currentTime}/{time}, start:{startTime}, end:{endTime}, pulseW :{pulseWidth}')
       return 0
-    
+
 
   def startupWave(self):
 
@@ -182,11 +186,11 @@ class LEDS:
     currentTime = startTime
     self.secPerBeat = 2000
     self.offset = self.secPerBeat-currentTime%self.secPerBeat # special sauce to still use the general tick_ms time, but ensure we start at 0.
-  
+
     while( currentTime < (startTime+self.secPerBeat )):
 
       currentTime = utime.ticks_ms()
-     
+
       for index, led in enumerate(self.startupConfig):
         brightness = self.calculateBrightness( self.secPerBeat, currentTime+self.offset, led['startTime']*self.secPerBeat, led['pulseWidth']*self.secPerBeat )
         # print(f'time: {((currentTime+self.offset)%self.secPerBeat)}led: {index+1}, brightness: {brightness}')
@@ -194,17 +198,17 @@ class LEDS:
           self.strand2[index]=tuple(round(i * 0.5* brightness) for i in self.ledBaseColors[index])
         else:
           self.strand[index-7]=tuple(round(i *0.5* brightness) for i in self.ledBaseColors[index])
-          
+
       self.strand2.write()
       self.strand.write()
-      
+
       time.sleep(.025)
-      
+
   def tickHeartbeat(self):
     currentTime = utime.ticks_ms()
     self.secPerBeat = 60000/self.bpm
-    if(self.newBPM != 0 ): 
-      #need to get smooth transitions,  as a shortcut going to add an offset to place the currentTime next in the same place relative to the cycle. 
+    if(self.newBPM != 0 ):
+      #need to get smooth transitions,  as a shortcut going to add an offset to place the currentTime next in the same place relative to the cycle.
       self.offset = ((currentTime+self.offset)%self.secPerBeat)*self.bpm/self.newBPM - currentTime
       self.bpm = self.newBPM
       self.secPerBeat = 60000/self.bpm
@@ -217,13 +221,13 @@ class LEDS:
         self.strand2[index]=tuple(round(i * 0.5* brightness) for i in self.ledBaseColors[index])
       else:
         self.strand[index-7]=tuple(round(i *0.5* brightness) for i in self.ledBaseColors[index])
-        
+
     self.strand2.write()
     self.strand.write()
 
 
-  def heartbeatRunLoop(self): 
+  def heartbeatRunLoop(self):
     timeDelay = .025
     while( True ):
-      self.tickHeartbeat()  
+      self.tickHeartbeat()
       time.sleep(timeDelay)
