@@ -1,6 +1,8 @@
 # Introduction 
 Badgetastic is a synergistic exercise in awesomeness for thrill seekers. Come one come all. Making a dope AF badge for BHV @ DEF CON 31. If you don't get the reference: https://www.youtube.com/watch?v=d0VO-zi5EgY
 
+*Please be advised that the badge reader is solely intended for visualization purposes and should not be utilized to conduct any heart measurements intended for clinical or medical applications.*
+
 # Prototyping
 Here are the basic parts that were used during development of the badge: 
 - [Raspberry Pi Pico](https://www.amazon.com/seeed-studio-Raspberry-Microcontroller-Dual-core/dp/B08TQSDP28/ref=sr_1_4?crid=3BR4CFGZY09KV&keywords=raspberry%2Bpi%2Bpico&qid=1673276394&s=electronics&sprefix=raspberry%2Bpi%2Bpico%2Celectronics%2C110&sr=1-4&th=1)
